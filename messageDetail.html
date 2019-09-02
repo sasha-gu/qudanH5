@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="format-detection" content="telephone=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>消息详情</title>
+    <link rel="stylesheet" href="css/reset.css?v=20190103001">
+    <script src="js/rem.js"></script>
+    <link rel="stylesheet" href="css/common.css?v=20190104001">
+    <link rel="stylesheet" href="plugin/layer_mobile/need/layer.css?v=20190103001">
+    <link rel="stylesheet" href="css/message.css?v=20190103001">
+    <script>
+    </script>
+</head>
+<body>
+    <header id="header">
+        <a class='icon-back'></a>
+        <h1>消息</h1>
+    </header>
+    <div class="content" id="content">
+        <div class="message-title">
+            <h2></h2><span class="remove">删除</span>
+        </div>
+        <div class="message-content">
+            <p></p>
+        </div>
+    </div>
+    <script src="js/config.js"></script>
+    <script src="js/jquery-1.9.1.min.js"></script>
+    <script src="plugin/layer_mobile/layer.js"></script>
+    <script src="js/common.js"></script>
+    <script>
+        var id = getQueryString('id');
+        var msgTitle = document.querySelector(".message-title h2");
+        var msgContent = document.querySelector(".message-content p");
+        Ajax_token(IP + 'msqudan/api/user/message/'+id, "GET", token, '', getDetail);
+        function getDetail(Data){
+            if(Data.code==200){
+                msgTitle.innerText = Data.data.message.msgTitle;
+                msgContent.innerText = Data.data.message.msgContent;
+            }
+        }
+        //删除消息
+        var content = document.getElementById("content");
+        content.addEventListener("click", function (event) {
+            var e = event || window.event;
+            var target = e.target || e.srcElement;
+            console.log(target);
+            if (target.className.toLowerCase() == 'remove') {
+                layerConfirm('是否确认删除该条消息','确定', remove);
+            }
+        }, false);
+
+        function remove() {
+            Ajax_token(IP + 'msqudan/api/user/message/'+id, "DELETE", token, '', clear);
+        }
+        function clear(Data){
+            if(Data.code==200){
+                window.location.href="message.html";
+            }
+        }
+
+    </script>
+</body>
+
+</html>

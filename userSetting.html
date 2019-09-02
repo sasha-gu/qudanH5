@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="format-detection" content="telephone=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>设置</title>
+    <link rel="stylesheet" href="css/reset.css?v=20190103001">
+    <script src="js/rem.js"></script>
+    <link rel="stylesheet" href="css/common.css?v=20190104001">
+    <style>
+        html,
+        body {
+            background-color: #fff;
+        }
+
+        .content {
+            padding-top: .2rem;
+        }
+
+        p {
+            margin-bottom: .3rem;
+        }
+
+        .btn-wrap {
+            margin-top: 2.6rem;
+            padding-bottom: .58rem;
+            font-size: 0;
+        }
+
+        .btn-submit {
+            width: 100%;
+            text-align: center;
+            line-height: .42rem;
+            margin-top: .46rem;
+            font-size: .2rem;
+        }
+
+        .title {
+            margin-bottom: .15rem;
+            font-size: .2rem;
+            color: #030303;
+        }
+    </style>
+</head>
+
+<body>
+    <header id="header">
+        <a class='icon-back'></a>
+        <h1>设置</h1>
+    </header>
+    <div class="content">
+        <h2 class="title">关于我们</h2>
+        <p>趣单是由安徽怡然信息技术有限公司开发的一款帮助人们兼职赚钱的信用卡推广APP，趣单为全国293个城市提供了海量的免费高薪任务，为保障用户的安全于利益，趣单的运营团队实时进行监督，我们是由一群热爱互联网的年轻人组成，我们用责任来做这个事情，致力于打造中国最大的金融推广平台，让每一次任务更加放心。</p>
+        <!-- <h2 class="title">用户协议</h2>
+        <p>趣单是一款专注于“流量变现”系统服务的聚合信用服务的微信公众号，趣单是一款专注于“流量变现”系统服务的聚合信用服务的微信公众号趣单是一款专注于“流量变现”系统服务的聚合信用服务的微信公众号。</p> -->
+        <div class="btn-wrap"><a class="btn btn-primary btn-submit">退出账号</a></div>
+
+    </div>
+
+
+    <!-- <script src="js/jquery-1.9.1.min.js"></script> -->
+    <script src="js/common.js"></script>
+    <script>
+        var btnSubmit = document.querySelector(".btn-submit");
+        btnSubmit.addEventListener("click", function () {
+            document.cookie = "token='';path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+            window.location.href = "login.html";
+        })
+    </script>
+</body>
+
+</html>

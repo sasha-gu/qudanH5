@@ -1,0 +1,293 @@
+<html lang="en" style="font-size: 10px;">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="format-detection" content="telephone=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>进度查询</title>
+    <link rel="stylesheet" href="css/reset.css?v=20190103001">
+    <script src="js/rem.js"></script>
+    <link rel="stylesheet" href="css/common.css?v=20190104001">
+    <link rel="stylesheet" href="css/progress.css?v=20190103002">
+</head>
+
+<body>
+    <header id="header">
+        <a class='icon-back'></a>
+        <h1>进度查询</h1>
+    </header>
+    <!-- <button onclick="go()">tiaozhuan</button> -->
+    <div class="content prodetail-content">
+        <!-- <div class="banner">
+            <img src="" alt="">
+        </div> -->
+        <div class="prodetail-main">
+            <h2 class="title">
+                <span class="logo-wrap">
+                    <img class="logo" src="" alt="">
+                </span>
+                <span class="product-name"></span>办卡进度
+            </h2>
+            <form action="" class="form-pro">
+                <div class="input-grow">
+                    <input type="text" placeholder="请输入真实姓名" class="realName">
+                </div>
+                <div class="input-grow">
+                    <input type="text" placeholder="请输入申请人身份证" class="idNo">
+                </div>
+                <div class="input-grow input-grow-hasright input-grow-imgcode" style="display: none;">
+                    <input type="text" placeholder="请输入图形验证码" class="imgCode">
+                    <span class="btn-getcode"></span>
+                </div>
+                <div class="input-grow input-grow-hasright input-grow-msgcode" style="display: none;">
+                    <input type="number" placeholder="请输入验证码" class="msgCode">
+                    <span class="text-yellow btn-getcode" id="getMsgCode">获取验证码</span>
+                    <span class="time-wrap text-right" style="display:none;">重新获取(<i class="time">60</i>s)</span>
+                </div>
+            </form>
+            <div class="btn-wrap">
+                <a class="btn linear-gradient-yellow btn-submit">查询办卡进度</a>
+            </div>
+        </div>
+    </div>
+    <input type="hidden" value="" class="bankId">
+    <input type="hidden" value="" class="cookieStr">
+    <script src="js/config.js"></script>
+    <script src="js/getToken.js"></script>
+    <script src="plugin/layer_mobile/layer.js"></script>
+    <script src="js/common.js"></script>
+    <script src="js/jquery-1.9.1.min.js"></script>
+    <script>
+        if (flagGetToken == 1) {
+             token = getCookie('token');
+            // var bannerImg = document.querySelector('.prodetail-content img');
+            var productLogo = document.querySelector('.logo');
+            var productName = document.querySelector('.product-name');
+            var imgCodeWrap = document.querySelector('.input-grow-imgcode');
+            var msgCodeWrap = document.querySelector('.input-grow-msgcode');
+            var btnSubmit = document.querySelector('.btn-submit');
+            var isBankList = getQueryString('isBankList');
+            var pid = getQueryString('pid');
+            if (isBankList && isBankList == 1) {
+                ajaxGet(IP + 'msqudan/api/bank/' + pid, getSimple);//获取查询信息：从银行列表进来的传银行id，否则传商品id，并调用不同接口
+            } else {
+                ajaxGet(IP + 'msqudan/api/product/' + pid + '/simple', getSimple);//获取查询信息
+            }
+            //获取手机验证码
+            document.getElementById("getMsgCode").addEventListener("click", function () {
+                var _this = this;
+                var timeWrap = document.querySelector(".time-wrap");
+                var time = timeWrap.querySelector('.time');
+                var t = 60;
+                var data;
+                console.log(formValidate());
+                if (formValidate()) {
+                    _this.style.display = "none";
+                    timeWrap.style.display = "block";
+                    var st = setInterval(function () {
+                        t--;
+                        if (t < 10) {
+                            t = "0" + t;
+                        }
+                        if (t == 0) {
+                            clearInterval(st);
+                            _this.style.display = "inline-block";
+                            timeWrap.style.display = "none";
+                            t = 60;
+                        }
+                        time.innerText = t;
+
+                    }, 1000);
+                    var data_trigger = JSON.stringify({
+                        idno: document.querySelector(".idNo").value,
+                        bankId: document.querySelector("input.bankId").value,
+                        name: document.querySelector(".realName").value,
+                        cookieStr: document.querySelector("input.cookieStr").value,
+                        imgCode: document.querySelector(".imgCode").value
+                    });
+                    Ajax_token(IP + 'msqudan/api/user/verify/trigger', "POST", token, data_trigger, getMsgCode)
+                }
+            })
+            //查询进度
+            btnSubmit.addEventListener("click", function () {
+                if (formValidate()) {
+                    if ((msgCodeWrap.style.display != "none") && (document.querySelector(".msgCode").value == '')) {
+                        layerMsg("请输入短信验证码");
+                        return false;
+                    }
+                    var process_data = JSON.stringify({
+                        idno: document.querySelector(".idNo").value,
+                        bankId: document.querySelector("input.bankId").value,
+                        cookieStr: document.querySelector("input.cookieStr").value,
+                        name: document.querySelector(".realName").value,
+                        imgCode: document.querySelector(".imgCode").value,
+                        activityCode: document.querySelector(".msgCode").value
+                    });
+                    Ajax_token(IP + "msqudan/api/user/process", "POST", token, process_data, process_result);
+
+                };
+
+            })
+            isWeixin();
+        }
+        function getImgCode(Data) {
+            if (Data.code == 200) {
+                console.log(Data.data.cookieStr);
+                document.querySelector("input.cookieStr").value = Data.data.cookieStr;
+                imgCodeWrap.querySelector(".btn-getcode").innerHTML = '<img src=' + Data.data.imgCodeUrl + ' onclick="refresh(this)"/>';
+            }
+        }
+        function process_result(Data) {
+            if (Data.code == 200) {
+                var idno = document.querySelector(".idNo").value;
+                var bankId = document.querySelector("input.bankId").value;
+                var cookieStr = document.querySelector("input.cookieStr").value;
+                var name = encodeURI(encodeURI(document.querySelector(".realName").value));
+                var imgCode, activityCode;
+                if (document.querySelector(".imgCode")) {
+                    imgCode = document.querySelector(".imgCode").value;
+                }
+                if (document.querySelector(".msgCode")) {
+                    activityCode = document.querySelector(".msgCode").value;
+                }
+                window.location.href = "progressResult.html?idno=" + idno + "&bankId=" + bankId + "&cookieStr=" + cookieStr + "&name=" + name + "&imgCode=" + imgCode + "&activityCode=" + activityCode;
+            }
+        }
+        //表单校验
+        function formValidate() {
+            var realName = document.querySelector(".realName").value;
+            var idNo = document.querySelector(".idNo").value;
+            var imgCode = document.querySelector(".imgCode").value;
+            var msgCode = document.querySelector(".msgCode").value;
+            if (realName == '') {
+                layerMsg("请输入真实姓名");
+                return false;
+            }
+            if (realName != "") {
+                var regName = /^[\u4e00-\u9fa5]{2,4}$/i;
+                if (!regName.test(realName)) {
+                    layerMsg('真实姓名填写有误');
+                    return false;
+                }
+            }
+            if (idNo == '') {
+                layerMsg("请输入身份证号码");
+                return false;
+            }
+            if (idNo != "") {
+                // 身份证号码为15位或者18位，15位时全为数字，18位前17位为数字，最后一位是校验位，可能为数字或字符X 
+                var reg = /(^\d{15}$)|(^\d{18}$)|(^\d{17}(\d|X|x)$)/;
+                if (reg.test(idNo) === false) {
+                    layerMsg("身份证号码有误<br>请重新输入");
+                    return false;
+                }
+            }
+            if (imgCodeWrap.style.display != "none") {
+                if (imgCode == '') {
+                    layerMsg("请输入图形验证码");
+                    return false;
+                }
+            }
+
+            return true;
+
+        }
+        function getLogo(Data) {
+            if (Data.code == 200) {
+                var product = Data.data.detail.product;
+                // bannerImg.setAttribute('src',product.progressQueryImg);
+                productLogo.setAttribute('src', product.logo);
+                productName.innerHTML = product.productName;
+            }
+        }
+        function getSimple(Data) {
+            if (Data.code == 200) {
+                // console.log(readCookie('weblogic'));
+                // console.log(readCookie('JSESSIONID'));
+                if (isBankList && isBankList == 1) {
+                    //存储bankId，后面获取手机验证码或者提交查询的时候传给服务端
+                    document.querySelector("input.bankId").value = Data.data.bank.bankId;
+                    productLogo.setAttribute('src', Data.data.bank.logo);
+                    productName.innerHTML = Data.data.bank.bankName;
+                    if (Data.data.bank.needVerifyCode == 0) {//是否需要图形验证码 0-否，1-是
+                        imgCodeWrap.style.display = 'none';
+                    } else {
+                        imgCodeWrap.style.display = 'block';
+                        // imgCodeWrap.querySelector(".btn-getcode").innerHTML = '<img src=' + Data.data.bank.verifyCodeLink + ' onclick="refresh(this)"/>';
+                        Ajax_token(IP + 'msqudan/api/user/imgcode/trigger', "POST", token, JSON.stringify({ bankId: Data.data.bank.bankId }), getImgCode)//获取图形验证码
+
+                    }
+                    if (Data.data.bank.needMobileVerifyCode == 0) {//是否需要手机验证码 0-否，1-是
+                        msgCodeWrap.style.display = 'none';
+                    } else {
+                        msgCodeWrap.style.display = 'block';
+
+                    }
+                } else {
+                    //存储bankId，后面获取手机验证码或者提交查询的时候传给服务端
+                    document.querySelector("input.bankId").value = Data.data.simple.bankId;
+                    productLogo.setAttribute('src', Data.data.simple.logo);
+                    productName.innerHTML = Data.data.simple.bankName;
+                    if (Data.data.simple.needVerifyCode == 0) {//是否需要图形验证码 0-否，1-是
+                        imgCodeWrap.style.display = 'none';
+                    } else {
+                        imgCodeWrap.style.display = 'block';
+                        // imgCodeWrap.querySelector(".btn-getcode").innerHTML = '<img src=' + Data.data.simple.verifyCodeLink + ' onclick="refresh(this)"/>';
+                        Ajax_token(IP + 'msqudan/api/user/imgcode/trigger', "POST", token, JSON.stringify({ bankId: Data.data.simple.bankId }), getImgCode)//获取图形验证码
+                    }
+                    if (Data.data.simple.needMobileVerifyCode == 0) {//是否需要手机验证码 0-否，1-是
+                        msgCodeWrap.style.display = 'none';
+                    } else {
+                        msgCodeWrap.style.display = 'block';
+                    }
+                }
+
+            }
+        }
+        //刷新图形验证码
+        function refresh(e) {
+            // e.src = e.getAttribute("src") + '&d=' + Math.random();
+            var data_imgCode_trigger = JSON.stringify({
+                bankId: document.querySelector("input.bankId").value
+            });
+            Ajax_token(IP + 'msqudan/api/user/imgcode/trigger', "POST", token, data_imgCode_trigger, getImgCode)//获取图形验证码
+
+        }
+        function getMsgCode(Data) {
+            if (Data.code == 200) {
+                layerMsg("短信验证码已发送！");
+            }
+        }
+        function ajaxGet(url, callback) {
+            $.ajax({
+                url: url,
+                type: "GET",
+                dataType: 'json',
+                success: callback,
+                error: function (e) {
+                    layerMsg($.parseJSON(e.responseText).error.message);
+                }
+            })
+        }
+
+        function isWeixin() {
+            var header = document.getElementById("header");
+            var ua = navigator.userAgent.toLowerCase();
+            if (header) {
+                if (ua.match(/MicroMessenger/i) == "micromessenger") {
+                    document.getElementById("header").className = "hidden";
+                    if (document.getElementById("wrapper")) {
+                        document.getElementById("wrapper").style.top = '0';
+                    }
+                } else {
+                    document.getElementById("header").className = "";
+                }
+            }
+        }
+    </script>
+
+</body>
+
+</html>

@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="format-detection" content="telephone=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>我的团队</title>
+    <link rel="stylesheet" href="css/reset.css?v=20190103001">
+    <link rel="stylesheet" href="plugin/layer_mobile/need/layer.css?v=20190103001">
+    <script src="js/rem.js"></script>
+    <link rel="stylesheet" href="css/common.css?v=20190104001">
+    <link rel="stylesheet" href="css/userInfo.css?v=20190103001">
+    <style>
+        #wrapper {
+            top: 2.37rem;
+            bottom: 0;
+        }
+        #dateShowBtn{
+            background-color: transparent;
+            text-align: center;
+            color: #666;
+        }
+        #dateShowBtn-box{
+            position: relative;
+        }
+        .icon-date-arrow{
+            position: absolute;
+            right: .2rem;
+            width: .12rem;
+            height: .17rem;
+            background: url(images/Rectangle@2x.png) no-repeat;
+            background-size: .12rem .07rem;
+            background-position: center center;
+        }
+    </style>
+</head>
+
+<body>
+    <header id="header">
+        <a class='icon-back'></a>
+        <h1>我的团队</h1>
+    </header>
+    <div class="content content-myTeam">
+        <div class="flex-wrap top">
+            <div class="flex-wrap">
+                <h2 class="total-people"></h2>
+                <p>团队成员</p>
+            </div>
+            <div class="flex-wrap">
+                <h2 class="total-revenue"></h2>
+                <p id="dateShowBtn-box"><input type="text" id="dateShowBtn" value="" data-year="" data-month=""><i
+                        class="icon icon-date-arrow"></i></p>
+            </div>
+        </div>
+        <h3 class="title">团队成员</h3>
+        <div id="wrapper">
+            <div class="ul-box">
+
+            </div>
+
+        </div>
+
+    </div>
+    <script id="tpl" type="text/html">
+        <ul class="list list-myTeam">
+        <%for(var i=0;i < list.rows.length;i++){%>
+            <li class="flex-wrap">
+                <div class="flex-item left">
+                    <h4 class="title"><%=list.rows[i].name%></h4>
+                    <p><%=des(list.rows[i].mobile)%></p>
+                    <p>推荐人：<%=list.rows[i].recommendName%></p>
+                </div>
+                <div class="flex-item right">
+                    <p class="top-right">注册于<%=list.rows[i].registerTime%></p>
+                    <p>提成</p>
+                    <p class="data text-red"><%=list.rows[i].revenue%>元</p>
+                </div>
+            </li>
+        <%}%>
+        </ul>
+    </script>
+    <script src="js/config.js"></script>
+    <script src="js/jquery-1.9.1.min.js"></script>
+    <script src="plugin/layer_mobile/layer.js"></script>
+    <script src="js/iscroll.js"></script>
+    <script src="js/pullToRefresh.js"></script>
+    <script src="Mdate/Mdate.js"></script>
+    <script src="js/common.js"></script>
+    <script src="plugin/template.js"></script>
+    <script>
+        var token = getCookie('token');
+        var ulBox = document.querySelector(".ul-box");
+        var tpl = document.getElementById("tpl").innerHTML;
+        var list, totalPeople, totalRevenue;
+        var page = 1, per_page = 10, ym = new Date().getFullYear() + '-' + new Date().getMonth() + 1, total;
+        var data = {
+            page: page,
+            per_page: per_page,
+            ym: ym
+        };
+        //初始化日期
+        new Mdate("dateShowBtn-box", {
+            //"dateShowBtn"为你点击触发Mdate的id，必填项
+            acceptId: "dateShowBtn",
+            //此项为你要显示选择后的日期的input，不填写默认为上一行的"dateShowBtn"
+            // beginYear: "2002",
+            // //此项为Mdate的初始年份，不填写默认为2000
+            // beginMonth: "10",
+            // //此项为Mdate的初始月份，不填写默认为1
+            // beginDay: "24",
+            // //此项为Mdate的初始日期，不填写默认为1
+            // endYear: "2017",
+            // //此项为Mdate的结束年份，不填写默认为当年
+            // endMonth: "1",
+            // //此项为Mdate的结束月份，不填写默认为当月
+            // endDay: "1",
+            // //此项为Mdate的结束日期，不填写默认为当天
+            format: "-"
+            //此项为Mdate需要显示的格式，可填写"/"或"-"或".",不填写默认为年月日
+        })
+        refresher.init({
+            id: "wrapper",
+            pullDownAction: pullDownAction,
+            pullUpAction: pullUpAction
+        });
+        Ajax_token(IP + 'msqudan/api/user/team', "GET", token, data, getlist);//获取我的团队列表
+        function getlist(Data) {
+            document.querySelector('.pullUpLabel').style.display = 'block';
+            if (Data.code == 200) {
+                document.querySelector(".total-people").innerHTML = Data.data.totalPeople + "人";
+                document.querySelector(".total-revenue").innerHTML = Data.data.totalRevenue + "元";
+                if (Data.data.rows.length > 0) {
+                    total = Math.floor((Data.data.total) / per_page);
+                    list = Data.data;
+                    var html = template(tpl, list);
+                    if (page > 1) {
+                        ulBox.innerHTML += html;
+                    } else {
+                        ulBox.innerHTML = html;
+                    }
+                    wrapper.refresh();
+                } else {
+                    ulBox.innerHTML = '<div class="no-result"><img src="images/no-result.png" alt=""><p>暂无结果，请耐心等待哦~</p></div>';
+                    // document.querySelector(".total-people").innerHTML = "0人";
+                    // document.querySelector(".total-revenue").innerHTML = "0元";
+                    wrapper.refresh();
+                    return false;
+                }
+            }
+        }
+        template.registerFunction('des', function (phone) {//template辅助方法：手机号脱敏显示
+            var ary = phone.split("");
+            ary.splice(3, 4, "****");
+            return ary.join("");
+        });
+        //下啦刷新
+        function pullDownAction() {
+            page = 1;
+            console.log(page);
+            data = {
+                page: page,
+                per_page: per_page,
+                ym: ym
+            };
+            Ajax_token(IP + 'msqudan/api/user/team', "GET", token, data, getlist);
+        }
+        // 上拉加载
+        function pullUpAction() {
+            //业务逻辑代码，比如通过ajax从服务器获取新数据；
+            page++;
+            console.log(page);
+            data = {
+                page: page,
+                per_page: per_page,
+                ym: ym
+            };
+            console.log(total);
+            var div = document.createElement("div");
+            div.className = 'no-more';
+            div.innerHTML = '已经到底了哦～';
+            if (total < page) {
+                wrapper.refresh();
+                if (!document.querySelector('.no-more')) {
+                    document.getElementById('goods-list').appendChild(div);
+                }
+
+                // document.querySelector('.pullUpLabel').innerHTML = '已经到底了哦～';
+                document.querySelector('.pullUpLabel').style.display = 'none';
+
+                return false;
+            }
+            Ajax_token(IP + 'msqudan/api/user/team', "GET", token, data, getlist);
+        }
+        isWeixin();
+        function isWeixin() {
+            var header = document.getElementById("header");
+            var ua = navigator.userAgent.toLowerCase();
+            if (header) {
+                if (ua.match(/MicroMessenger/i) == "micromessenger") {
+                    document.getElementById("header").className = "hidden";
+                    if (document.getElementById("wrapper")) {
+                        document.getElementById("wrapper").style.top = '1.93rem';
+                    }
+                } else {
+                    document.getElementById("header").className = "";
+                }
+            }
+        }
+    </script>
+</body>
+
+</html>

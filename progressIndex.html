@@ -1,0 +1,55 @@
+<html lang="en" style="font-size: 10px;">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="format-detection" content="telephone=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>进度查询</title>
+    <link rel="stylesheet" href="css/reset.css?v=20190103001">
+    <script src="js/rem.js"></script>
+    <link rel="stylesheet" href="css/common.css?v=20190104001">
+    <link rel="stylesheet" href="css/progress.css?v=20190103001">
+</head>
+
+<body>
+    <header id="header">
+        <a class='icon-back'></a>
+        <h1>进度查询</h1>
+    </header>
+    <div class="proIndex-content">
+
+    </div>
+    <script src="js/config.js"></script>
+    <script src="js/jquery-1.9.1.min.js"></script>
+    <script src="js/common.js"></script>
+    <script>
+        AjaxGet(IP + "msqudan/api/banks", getBankList);
+        function getBankList(Data) {
+            if (Data.code == 200) {
+                var html = '';
+                for (var i = 0; i < Data.data.banks.length; i++) {
+                    html += '<a class="flex-item" onclick="skip(this)" data-bankid="' + Data.data.banks[i].id + '"><div class="img-wrap"><img src="' + Data.data.banks[i].logo + '" alt=""></div><p>' + Data.data.banks[i].name + '</p></a >';
+                }
+                document.querySelector(".proIndex-content").innerHTML = html;
+            }
+        }
+        function skip(e) {
+            var pid = e.getAttribute("data-bankid");
+            AjaxGet(IP + 'msqudan/api/bank/' + pid, getSimple);//获取查询信息
+        }
+        function getSimple(Data) {
+            if (Data.code == 200) {
+                if (Data.data.bank.hasLink == 1) {//是否H5跳转查询，0-否，1-是， 是的情况下直接跳转 getLink字段表示的连接上
+                    window.location.href = Data.data.bank.getLink;
+                } else {
+                    window.location.href = "progressDetail.html?isBankList=1&pid=" + Data.data.bank.bankId
+                }
+            }
+        }
+    </script>
+
+</body>
+
+</html>
